@@ -1,0 +1,464 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Smooth scrolling with offset for fixed navbar */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem; /* 80px navbar height */
+  }
+
+  /* Ensure sections have proper scroll margin */
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Accessibility improvements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .sr-only:focus,
+  .focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :root {
+      --primary: 0 0% 0%;
+      --background: 0 0% 100%;
+      --foreground: 0 0% 0%;
+    }
+
+    .dark {
+      --primary: 0 0% 100%;
+      --background: 0 0% 0%;
+      --foreground: 0 0% 100%;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* Focus indicators */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Ensure minimum touch target size */
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Background grid pattern */
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, hsl(var(--muted-foreground) / 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Custom cursor styles */
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  transition: transform 0.2s ease;
+}
+
+.cursor-outline {
+  width: 40px;
+  height: 40px;
+  border: 2px solid hsla(var(--primary), 0.5);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 998;
+  transition: transform 0.2s ease;
+}
+
+/* Hide custom cursor for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cursor-dot,
+  .cursor-outline {
+    display: none;
+  }
+}
+
+/* Typing effect styles */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: currentColor;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Interactive element styles */
+.tech-icon {
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.tech-icon:hover {
+  transform: translateY(-5px);
+  filter: drop-shadow(0 0 8px hsla(var(--primary), 0.5));
+}
+
+/* Enhanced project card styles */
+.project-card {
+  perspective: 1000px;
+  transition: transform 0.5s;
+}
+
+.project-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.project-card:hover .project-card-inner {
+  transform: rotateY(10deg) rotateX(5deg);
+}
+
+/* Project icon specific styles */
+.project-card:hover .project-icon {
+  transform: scale(1.05);
+}
+
+.project-icon {
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+}
+
+/* Easter egg styles */
+.easter-egg {
+  cursor: help;
+  position: relative;
+}
+
+.easter-egg::after {
+  content: "🥚";
+  position: absolute;
+  font-size: 0.6em;
+  top: -0.5em;
+  right: -0.5em;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.easter-egg:hover::after,
+.easter-egg:focus::after {
+  opacity: 1;
+}
+
+/* Timeline styles */
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+  padding-bottom: 2rem;
+  border-left: 2px solid hsl(var(--primary));
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: hsl(var(--primary));
+}
+
+.timeline-item:last-child {
+  border-left: 2px solid transparent;
+}
+
+/* Smooth theme transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Color scheme support */
+html {
+  color-scheme: light dark;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  button,
+  [role="button"],
+  a {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  .project-card .project-icon {
+    min-height: 180px;
+  }
+
+  /* Adjust scroll padding for mobile */
+  html {
+    scroll-padding-top: 4rem;
+  }
+
+  section[id] {
+    scroll-margin-top: 4rem;
+  }
+}
+
+/* Tablet specific adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .project-card .project-icon {
+    min-height: 190px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .cursor-dot,
+  .cursor-outline,
+  .easter-egg::after {
+    display: none;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .project-card-inner {
+    transform: none !important;
+  }
+
+  .project-icon {
+    background: white !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
+/* High contrast mode adjustments for project icons */
+@media (prefers-contrast: high) {
+  .project-icon {
+    border-width: 3px;
+  }
+
+  .project-icon div {
+    background: hsl(var(--background)) !important;
+    border: 2px solid hsl(var(--foreground));
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Selection styles */
+::selection {
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}
+
+/* Loading states */
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Navbar specific styles to prevent overlap */
+nav {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Ensure hero content is properly spaced below navbar */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Smooth scroll offset for all anchor links */
+[id] {
+  scroll-margin-top: 5rem;
+}
+
+@media (max-width: 768px) {
+  [id] {
+    scroll-margin-top: 4rem;
+  }
+}
