@@ -295,9 +295,15 @@
       cursor: auto !important;
     }
 
-    .custom-cursor {
+    .custom-cursor,
+    .performance-monitor {
       display: none !important;
     }
+  }
+
+  /* Text balance utility */
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
@@ -322,7 +328,13 @@
   transform: translateY(0);
 }
 
-/* Critical CSS for above-the-fold content */
+/* Performance optimized class */
+.performance-optimized {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Navbar styles */
 .navbar {
   position: fixed;
   top: 0;

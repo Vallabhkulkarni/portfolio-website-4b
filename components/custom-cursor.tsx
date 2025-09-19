@@ -1,156 +1,162 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-
-interface CursorPosition {
-  x: number
-  y: number
-}
+import { useEffect, useState, useCallback, useRef } from "react"
 
 export default function CustomCursor() {
-  const [position, setPosition] = useState<CursorPosition>({ x: 0, y: 0 })
+  const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [isClicking, setIsClicking] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const cursorRef = useRef<HTMLDivElement>(null)
+  const animationRef = useRef<number>()
 
   // Check if user prefers reduced motion
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-
-    // Check for reduced motion preference
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
-    setPrefersReducedMotion(mediaQuery.matches)
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches)
-    }
-
-    mediaQuery.addEventListener("change", handleChange)
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange)
-    }
+  const prefersReducedMotion = useCallback(() => {
+    if (typeof window === "undefined") return true
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }, [])
 
-  const updatePosition = useCallback(
-    (e: MouseEvent) => {
-      if (!isMounted) return
+  // Update cursor position with requestAnimationFrame for smooth performance
+  const updateCursorPosition = useCallback((e: MouseEvent) => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current)
+    }
 
-      requestAnimationFrame(() => {
-        setPosition({ x: e.clientX, y: e.clientY })
-      })
+    animationRef.current = requestAnimationFrame(() => {
+      setPosition({ x: e.clientX, y: e.clientY })
+    })
+  }, [])
+
+  // Check if element is interactive
+  const isInteractiveElement = useCallback((element: Element): boolean => {
+    const interactiveSelectors = [
+      "a",
+      "button",
+      "input",
+      "textarea",
+      "select",
+      "label",
+      '[role="button"]',
+      "[tabindex]",
+      ".cursor-pointer",
+      ".clickable",
+    ]
+
+    return interactiveSelectors.some((selector) => {
+      try {
+        return element.matches(selector) || element.closest(selector)
+      } catch {
+        return false
+      }
+    })
+  }, [])
+
+  // Handle mouse enter/leave on interactive elements
+  const handleMouseOver = useCallback(
+    (e: MouseEvent) => {
+      const target = e.target as Element
+      if (target && isInteractiveElement(target)) {
+        setIsHovering(true)
+      } else {
+        setIsHovering(false)
+      }
     },
-    [isMounted],
+    [isInteractiveElement],
   )
 
+  // Handle mouse down
+  const handleMouseDown = useCallback(() => {
+    setIsClicking(true)
+  }, [])
+
+  // Handle mouse up
+  const handleMouseUp = useCallback(() => {
+    setIsClicking(false)
+  }, [])
+
+  // Handle mouse enter viewport
   const handleMouseEnter = useCallback(() => {
     setIsVisible(true)
   }, [])
 
+  // Handle mouse leave viewport
   const handleMouseLeave = useCallback(() => {
     setIsVisible(false)
     setIsHovering(false)
     setIsClicking(false)
   }, [])
 
-  const handleMouseOver = useCallback((e: MouseEvent) => {
-    const target = e.target as HTMLElement
-    if (!target) return
-
-    const isInteractive =
-      target.tagName === "BUTTON" ||
-      target.tagName === "A" ||
-      target.tagName === "INPUT" ||
-      target.tagName === "TEXTAREA" ||
-      target.tagName === "SELECT" ||
-      target.role === "button" ||
-      target.classList.contains("cursor-pointer") ||
-      target.classList.contains("clickable") ||
-      target.closest("button") ||
-      target.closest("a") ||
-      target.closest("[role='button']") ||
-      target.closest(".cursor-pointer") ||
-      target.closest(".clickable")
-
-    setIsHovering(isInteractive)
-  }, [])
-
-  const handleMouseDown = useCallback(() => {
-    setIsClicking(true)
-  }, [])
-
-  const handleMouseUp = useCallback(() => {
-    setIsClicking(false)
-  }, [])
-
   useEffect(() => {
-    if (!isMounted || prefersReducedMotion) return
+    setMounted(true)
+
+    // Don't show custom cursor if user prefers reduced motion
+    if (prefersReducedMotion()) {
+      return
+    }
 
     // Add event listeners
-    document.addEventListener("mousemove", updatePosition, { passive: true })
-    document.addEventListener("mouseenter", handleMouseEnter, { passive: true })
-    document.addEventListener("mouseleave", handleMouseLeave, { passive: true })
-    document.addEventListener("mouseover", handleMouseOver, { passive: true })
-    document.addEventListener("mousedown", handleMouseDown, { passive: true })
-    document.addEventListener("mouseup", handleMouseUp, { passive: true })
+    const eventOptions = { passive: true }
 
+    document.addEventListener("mousemove", updateCursorPosition, eventOptions)
+    document.addEventListener("mouseover", handleMouseOver, eventOptions)
+    document.addEventListener("mousedown", handleMouseDown, eventOptions)
+    document.addEventListener("mouseup", handleMouseUp, eventOptions)
+    document.addEventListener("mouseenter", handleMouseEnter, eventOptions)
+    document.addEventListener("mouseleave", handleMouseLeave, eventOptions)
+
+    // Hide default cursor
+    document.body.style.cursor = "none"
+
+    // Cleanup function
     return () => {
-      document.removeEventListener("mousemove", updatePosition)
-      document.removeEventListener("mouseenter", handleMouseEnter)
-      document.removeEventListener("mouseleave", handleMouseLeave)
+      document.removeEventListener("mousemove", updateCursorPosition)
       document.removeEventListener("mouseover", handleMouseOver)
       document.removeEventListener("mousedown", handleMouseDown)
       document.removeEventListener("mouseup", handleMouseUp)
+      document.removeEventListener("mouseenter", handleMouseEnter)
+      document.removeEventListener("mouseleave", handleMouseLeave)
+
+      // Restore default cursor
+      document.body.style.cursor = "auto"
+
+      // Cancel any pending animation frame
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
     }
   }, [
-    isMounted,
-    prefersReducedMotion,
-    updatePosition,
-    handleMouseEnter,
-    handleMouseLeave,
+    updateCursorPosition,
     handleMouseOver,
     handleMouseDown,
     handleMouseUp,
+    handleMouseEnter,
+    handleMouseLeave,
+    prefersReducedMotion,
   ])
 
-  // Don't render if not mounted, user prefers reduced motion, or not visible
-  if (!isMounted || prefersReducedMotion || !isVisible) {
+  // Don't render on server or if user prefers reduced motion
+  if (!mounted || prefersReducedMotion()) {
     return null
   }
 
-  const cursorScale = isClicking ? 0.8 : isHovering ? 1.5 : 1
-  const outlineScale = isClicking ? 0.6 : isHovering ? 1.2 : 1
-
   return (
-    <>
-      {/* Main cursor dot */}
-      <div
-        className="fixed pointer-events-none z-[9999] mix-blend-difference transition-transform duration-100 ease-out will-change-transform"
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          transform: `translate(-50%, -50%) scale(${cursorScale})`,
-        }}
-        aria-hidden="true"
-      >
-        <div className="w-2 h-2 bg-white rounded-full" />
-      </div>
-
-      {/* Cursor outline */}
-      <div
-        className="fixed pointer-events-none z-[9998] border border-white/30 rounded-full transition-all duration-300 ease-out will-change-transform"
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          transform: `translate(-50%, -50%) scale(${outlineScale})`,
-          width: isHovering ? "40px" : "32px",
-          height: isHovering ? "40px" : "32px",
-        }}
-        aria-hidden="true"
-      />
-    </>
+    <div
+      ref={cursorRef}
+      className={`
+        fixed top-0 left-0 pointer-events-none z-[9999] 
+        transition-all duration-150 ease-out
+        ${isVisible ? "opacity-100" : "opacity-0"}
+        ${isHovering ? "scale-150" : "scale-100"}
+        ${isClicking ? "scale-75" : ""}
+      `}
+      style={{
+        transform: `translate3d(${position.x - 8}px, ${position.y - 8}px, 0)`,
+        willChange: "transform",
+        mixBlendMode: "difference",
+      }}
+    >
+      <div className="w-4 h-4 bg-white rounded-full border border-white/50 shadow-lg" />
+    </div>
   )
 }

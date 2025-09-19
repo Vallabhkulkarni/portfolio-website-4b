@@ -1,162 +1,237 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-import { Code, Database, Globe, Wrench, Lightbulb, Users } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Code2, Database, Globe, Smartphone, Brain, Users, Lightbulb, Target, Puzzle, Bug, Layers } from "lucide-react"
 
 const skillCategories = [
   {
-    title: "Programming Languages",
-    icon: Code,
-    description: "Core programming languages and frameworks",
+    title: "Frontend Development",
+    icon: <Globe className="w-6 h-6" />,
+    description: "Creating responsive and interactive user interfaces",
     skills: [
-      "Java",
-      "JavaScript",
-      "TypeScript",
-      "PL/SQL",
-      "HTML5",
-      "CSS3",
-      "Python",
-      "C++",
       "React",
       "Next.js",
+      "TypeScript",
+      "JavaScript",
+      "HTML5",
+      "CSS3",
+      "Tailwind CSS",
+      "Framer Motion",
+      "Redux",
+      "Zustand",
+      "React Query",
+    ],
+  },
+  {
+    title: "Backend Development",
+    icon: <Database className="w-6 h-6" />,
+    description: "Building scalable server-side applications and APIs",
+    skills: [
       "Node.js",
-    ],
-  },
-  {
-    title: "Oracle Technologies",
-    icon: Database,
-    description: "Enterprise Oracle development stack",
-    skills: [
-      "Oracle VBCS",
-      "Oracle ADF",
-      "Oracle SQL",
-      "Oracle HCM",
-      "HDL (HCM Data Loader)",
-      "Oracle Database",
-      "Oracle Forms",
-      "Oracle Reports",
-      "Oracle APEX",
-    ],
-  },
-  {
-    title: "Web Technologies",
-    icon: Globe,
-    description: "Modern web development technologies",
-    skills: [
-      "REST APIs",
-      "Web Services",
-      "JSON",
-      "XML",
-      "SOAP",
+      "Express.js",
+      "Python",
+      "Django",
+      "FastAPI",
+      "PostgreSQL",
+      "MongoDB",
+      "Redis",
       "GraphQL",
+      "REST APIs",
       "Microservices",
-      "Progressive Web Apps",
-      "Responsive Design",
     ],
   },
   {
-    title: "Tools & Platforms",
-    icon: Wrench,
-    description: "Development tools and platforms",
+    title: "Mobile Development",
+    icon: <Smartphone className="w-6 h-6" />,
+    description: "Cross-platform mobile application development",
     skills: [
-      "Git",
-      "GitHub",
-      "VS Code",
-      "IntelliJ IDEA",
-      "Oracle JDeveloper",
-      "Postman",
+      "React Native",
+      "Expo",
+      "Flutter",
+      "Dart",
+      "iOS Development",
+      "Android Development",
+      "Mobile UI/UX",
+      "App Store Deployment",
+    ],
+  },
+  {
+    title: "DevOps & Cloud",
+    icon: <Code2 className="w-6 h-6" />,
+    description: "Infrastructure, deployment, and cloud services",
+    skills: [
       "Docker",
-      "Jenkins",
-      "Maven",
-      "npm/yarn",
+      "Kubernetes",
+      "AWS",
+      "Vercel",
+      "GitHub Actions",
+      "CI/CD",
+      "Nginx",
+      "Linux",
+      "Monitoring",
+      "Load Balancing",
     ],
   },
   {
     title: "Problem Solving",
-    icon: Lightbulb,
-    description: "Analytical and problem-solving capabilities",
+    icon: <Brain className="w-6 h-6" />,
+    description: "Analytical thinking and solution architecture",
     skills: [
       "Algorithm Design",
-      "System Design",
       "Data Structures",
+      "System Design",
       "Debugging",
       "Performance Optimization",
       "Code Review",
       "Technical Documentation",
-      "Requirements Analysis",
     ],
   },
   {
-    title: "Soft Skills",
-    icon: Users,
-    description: "Communication and collaboration skills",
+    title: "Collaboration",
+    icon: <Users className="w-6 h-6" />,
+    description: "Working effectively in team environments",
     skills: [
-      "Team Collaboration",
-      "Project Management",
-      "Client Communication",
+      "Agile/Scrum",
+      "Git/GitHub",
+      "Code Review",
       "Mentoring",
-      "Agile Methodology",
-      "Scrum",
-      "Leadership",
-      "Presentation Skills",
+      "Technical Writing",
+      "Project Management",
+      "Cross-functional Teams",
     ],
   },
 ]
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+    },
+  },
+}
+
 export default function Skills() {
   return (
-    <section id="skills" className="py-20 bg-muted/50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Technical Skills & Expertise</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            A comprehensive overview of my technical skills, tools, and technologies I work with to deliver high-quality
-            software solutions.
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-20">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+        className="text-center mb-16"
+      >
+        <motion.div variants={itemVariants} className="flex items-center justify-center gap-2 mb-4">
+          <Lightbulb className="w-8 h-8 text-primary" />
+          <h2 className="text-4xl font-bold">Skills & Expertise</h2>
+        </motion.div>
+        <motion.p variants={itemVariants} className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          A comprehensive toolkit for building modern, scalable applications
+        </motion.p>
+      </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {skillCategories.map((category, index) => {
-            const IconComponent = category.icon
-            return (
-              <Card
-                key={category.title}
-                className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer group"
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <IconComponent className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{category.title}</CardTitle>
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={containerVariants}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+      >
+        {skillCategories.map((category, index) => (
+          <motion.div key={category.title} variants={itemVariants}>
+            <Card className="h-full hover:shadow-lg transition-all duration-300 group cursor-pointer">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                    {category.icon}
                   </div>
-                  <CardDescription className="text-sm">{category.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {category.skills.map((skill) => (
-                      <Badge
-                        key={skill}
-                        variant="secondary"
-                        className="text-xs hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                      >
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                </div>
+                <CardTitle className="text-xl mb-2">{category.title}</CardTitle>
+                <CardDescription className="text-sm">{category.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {category.skills.map((skill) => (
+                    <Badge
+                      key={skill}
+                      variant="secondary"
+                      className="text-xs hover:bg-primary hover:text-primary-foreground transition-colors duration-200 cursor-pointer"
+                    >
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
 
-        <div className="mt-16 text-center">
-          <p className="text-muted-foreground">
-            Always learning and exploring new technologies to stay current with industry trends.
-          </p>
-        </div>
-      </div>
-    </section>
+      {/* Additional Skills Summary */}
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={containerVariants}
+        className="mt-16 text-center"
+      >
+        <motion.div variants={itemVariants}>
+          <Card className="max-w-4xl mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center gap-2">
+                <Target className="w-6 h-6 text-primary" />
+                Core Competencies
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                <div className="space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Puzzle className="w-4 h-4 text-primary" />
+                    Architecture
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Designing scalable, maintainable system architectures with modern patterns and best practices.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Bug className="w-4 h-4 text-primary" />
+                    Optimization
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Performance tuning, code optimization, and implementing efficient algorithms for better user
+                    experience.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-primary" />
+                    Integration
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Seamlessly connecting different systems, APIs, and services to create cohesive solutions.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+    </div>
   )
 }
