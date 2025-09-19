@@ -53,7 +53,7 @@ const PerformanceMonitor = dynamic(() => import("@/components/performance-monito
 export default function ClientPageWrapper() {
   return (
     <>
-      {/* Below-the-fold sections */}
+      {/* Main content sections */}
       <section id="about" className="py-20 bg-muted/50">
         <Suspense
           fallback={

@@ -4,14 +4,14 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Monitor, X, Activity, Clock, Zap, Eye } from "lucide-react"
+import { X, Activity } from "lucide-react"
 
 interface PerformanceMetrics {
-  fcp: number | null // First Contentful Paint
-  lcp: number | null // Largest Contentful Paint
-  fid: number | null // First Input Delay
-  cls: number | null // Cumulative Layout Shift
-  ttfb: number | null // Time to First Byte
+  fcp: number | null
+  lcp: number | null
+  fid: number | null
+  cls: number | null
+  ttfb: number | null
 }
 
 export default function PerformanceMonitor() {
@@ -23,17 +23,17 @@ export default function PerformanceMonitor() {
     ttfb: null,
   })
   const [isVisible, setIsVisible] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const [isDevelopment, setIsDevelopment] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-
     // Only show in development
-    if (process.env.NODE_ENV !== "development") {
+    setIsDevelopment(process.env.NODE_ENV === "development")
+
+    if (typeof window === "undefined" || process.env.NODE_ENV !== "development") {
       return
     }
 
-    // Keyboard shortcut to toggle performance monitor (Ctrl+Shift+P)
+    // Keyboard shortcut to toggle monitor
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "P") {
         e.preventDefault()
@@ -43,73 +43,64 @@ export default function PerformanceMonitor() {
 
     document.addEventListener("keydown", handleKeyPress)
 
-    // Collect performance metrics
-    const collectMetrics = () => {
-      try {
-        // Get navigation timing
-        const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming
-        if (navigation) {
-          setMetrics((prev) => ({
-            ...prev,
-            ttfb: navigation.responseStart - navigation.requestStart,
-          }))
+    // Performance observer for Web Vitals
+    if ("PerformanceObserver" in window) {
+      // First Contentful Paint
+      const fcpObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries()
+        const fcpEntry = entries.find((entry) => entry.name === "first-contentful-paint")
+        if (fcpEntry) {
+          setMetrics((prev) => ({ ...prev, fcp: fcpEntry.startTime }))
         }
+      })
 
-        // Get paint timing
-        const paintEntries = performance.getEntriesByType("paint")
-        paintEntries.forEach((entry) => {
-          if (entry.name === "first-contentful-paint") {
-            setMetrics((prev) => ({ ...prev, fcp: entry.startTime }))
+      // Largest Contentful Paint
+      const lcpObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries()
+        const lcpEntry = entries[entries.length - 1]
+        if (lcpEntry) {
+          setMetrics((prev) => ({ ...prev, lcp: lcpEntry.startTime }))
+        }
+      })
+
+      // Cumulative Layout Shift
+      const clsObserver = new PerformanceObserver((list) => {
+        let clsValue = 0
+        for (const entry of list.getEntries()) {
+          if (!(entry as any).hadRecentInput) {
+            clsValue += (entry as any).value
           }
-        })
-
-        // Web Vitals observer
-        if ("PerformanceObserver" in window) {
-          // LCP Observer
-          const lcpObserver = new PerformanceObserver((list) => {
-            const entries = list.getEntries()
-            const lastEntry = entries[entries.length - 1]
-            setMetrics((prev) => ({ ...prev, lcp: lastEntry.startTime }))
-          })
-          lcpObserver.observe({ type: "largest-contentful-paint", buffered: true })
-
-          // FID Observer
-          const fidObserver = new PerformanceObserver((list) => {
-            const entries = list.getEntries()
-            entries.forEach((entry) => {
-              setMetrics((prev) => ({ ...prev, fid: entry.processingStart - entry.startTime }))
-            })
-          })
-          fidObserver.observe({ type: "first-input", buffered: true })
-
-          // CLS Observer
-          const clsObserver = new PerformanceObserver((list) => {
-            let clsValue = 0
-            const entries = list.getEntries()
-            entries.forEach((entry: any) => {
-              if (!entry.hadRecentInput) {
-                clsValue += entry.value
-              }
-            })
-            setMetrics((prev) => ({ ...prev, cls: clsValue }))
-          })
-          clsObserver.observe({ type: "layout-shift", buffered: true })
         }
-      } catch (error) {
-        console.warn("Performance monitoring error:", error)
-      }
-    }
+        setMetrics((prev) => ({ ...prev, cls: clsValue }))
+      })
 
-    // Collect metrics after page load
-    if (document.readyState === "complete") {
-      collectMetrics()
-    } else {
-      window.addEventListener("load", collectMetrics)
+      try {
+        fcpObserver.observe({ entryTypes: ["paint"] })
+        lcpObserver.observe({ entryTypes: ["largest-contentful-paint"] })
+        clsObserver.observe({ entryTypes: ["layout-shift"] })
+      } catch (error) {
+        console.warn("Performance Observer not fully supported:", error)
+      }
+
+      // Navigation timing for TTFB
+      if (performance.getEntriesByType) {
+        const navigationEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[]
+        if (navigationEntries.length > 0) {
+          const ttfb = navigationEntries[0].responseStart - navigationEntries[0].requestStart
+          setMetrics((prev) => ({ ...prev, ttfb }))
+        }
+      }
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyPress)
+        fcpObserver.disconnect()
+        lcpObserver.disconnect()
+        clsObserver.disconnect()
+      }
     }
 
     return () => {
       document.removeEventListener("keydown", handleKeyPress)
-      window.removeEventListener("load", collectMetrics)
     }
   }, [])
 
@@ -125,134 +116,77 @@ export default function PerformanceMonitor() {
     return `${Math.round(value)}${unit}`
   }
 
-  if (!mounted || process.env.NODE_ENV !== "development" || !isVisible) {
-    return null
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "good":
+        return "bg-green-500/10 text-green-600 border-green-200"
+      case "needs-improvement":
+        return "bg-yellow-500/10 text-yellow-600 border-yellow-200"
+      case "poor":
+        return "bg-red-500/10 text-red-600 border-red-200"
+      default:
+        return "bg-gray-500/10 text-gray-600 border-gray-200"
+    }
+  }
+
+  if (!isDevelopment || !isVisible) {
+    return isDevelopment ? (
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button
+          onClick={() => setIsVisible(true)}
+          size="sm"
+          variant="outline"
+          className="bg-background/80 backdrop-blur-sm"
+        >
+          <Activity className="h-4 w-4 mr-2" />
+          Performance
+        </Button>
+      </div>
+    ) : null
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9998] max-w-sm">
-      <Card className="shadow-lg border-2">
+    <div className="fixed bottom-4 right-4 z-50 w-80">
+      <Card className="bg-background/95 backdrop-blur-sm border-2">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Monitor className="w-4 h-4" />
+              <Activity className="h-4 w-4" />
               Performance Monitor
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)} className="h-6 w-6 p-0">
-              <X className="w-3 h-3" />
+            <Button onClick={() => setIsVisible(false)} size="sm" variant="ghost" className="h-6 w-6 p-0">
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 pt-0">
-          {/* Core Web Vitals */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="w-3 h-3" />
-                <span className="text-xs font-medium">FCP</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    getMetricStatus(metrics.fcp, { good: 1800, poor: 3000 }) === "good"
-                      ? "default"
-                      : getMetricStatus(metrics.fcp, { good: 1800, poor: 3000 }) === "needs-improvement"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className="text-xs"
-                >
-                  {formatMetric(metrics.fcp)}
-                </Badge>
-              </div>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div className="font-medium mb-1">First Contentful Paint</div>
+              <Badge className={getStatusColor(getMetricStatus(metrics.fcp, { good: 1800, poor: 3000 }))}>
+                {formatMetric(metrics.fcp)}
+              </Badge>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity className="w-3 h-3" />
-                <span className="text-xs font-medium">LCP</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    getMetricStatus(metrics.lcp, { good: 2500, poor: 4000 }) === "good"
-                      ? "default"
-                      : getMetricStatus(metrics.lcp, { good: 2500, poor: 4000 }) === "needs-improvement"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className="text-xs"
-                >
-                  {formatMetric(metrics.lcp)}
-                </Badge>
-              </div>
+            <div>
+              <div className="font-medium mb-1">Largest Contentful Paint</div>
+              <Badge className={getStatusColor(getMetricStatus(metrics.lcp, { good: 2500, poor: 4000 }))}>
+                {formatMetric(metrics.lcp)}
+              </Badge>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap className="w-3 h-3" />
-                <span className="text-xs font-medium">FID</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    getMetricStatus(metrics.fid, { good: 100, poor: 300 }) === "good"
-                      ? "default"
-                      : getMetricStatus(metrics.fid, { good: 100, poor: 300 }) === "needs-improvement"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className="text-xs"
-                >
-                  {formatMetric(metrics.fid)}
-                </Badge>
-              </div>
+            <div>
+              <div className="font-medium mb-1">Cumulative Layout Shift</div>
+              <Badge className={getStatusColor(getMetricStatus(metrics.cls, { good: 0.1, poor: 0.25 }))}>
+                {formatMetric(metrics.cls, "")}
+              </Badge>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="w-3 h-3" />
-                <span className="text-xs font-medium">CLS</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    getMetricStatus(metrics.cls, { good: 0.1, poor: 0.25 }) === "good"
-                      ? "default"
-                      : getMetricStatus(metrics.cls, { good: 0.1, poor: 0.25 }) === "needs-improvement"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className="text-xs"
-                >
-                  {formatMetric(metrics.cls, "")}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Monitor className="w-3 h-3" />
-                <span className="text-xs font-medium">TTFB</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    getMetricStatus(metrics.ttfb, { good: 800, poor: 1800 }) === "good"
-                      ? "default"
-                      : getMetricStatus(metrics.ttfb, { good: 800, poor: 1800 }) === "needs-improvement"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className="text-xs"
-                >
-                  {formatMetric(metrics.ttfb)}
-                </Badge>
-              </div>
+            <div>
+              <div className="font-medium mb-1">Time to First Byte</div>
+              <Badge className={getStatusColor(getMetricStatus(metrics.ttfb, { good: 800, poor: 1800 }))}>
+                {formatMetric(metrics.ttfb)}
+              </Badge>
             </div>
           </div>
-
-          <div className="pt-2 border-t text-xs text-muted-foreground">Press Ctrl+Shift+P to toggle</div>
+          <div className="text-xs text-muted-foreground pt-2 border-t">Press Ctrl+Shift+P to toggle this monitor</div>
         </CardContent>
       </Card>
     </div>

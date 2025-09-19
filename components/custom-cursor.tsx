@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState } from "react"
 
 export default function CustomCursor() {
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -8,152 +8,93 @@ export default function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false)
   const [isClicking, setIsClicking] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const cursorRef = useRef<HTMLDivElement>(null)
-  const animationRef = useRef<number>()
-
-  // Check if user prefers reduced motion
-  const prefersReducedMotion = useCallback(() => {
-    if (typeof window === "undefined") return true
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  }, [])
-
-  // Update cursor position with requestAnimationFrame for smooth performance
-  const updateCursorPosition = useCallback((e: MouseEvent) => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-    }
-
-    animationRef.current = requestAnimationFrame(() => {
-      setPosition({ x: e.clientX, y: e.clientY })
-    })
-  }, [])
-
-  // Check if element is interactive
-  const isInteractiveElement = useCallback((element: Element): boolean => {
-    const interactiveSelectors = [
-      "a",
-      "button",
-      "input",
-      "textarea",
-      "select",
-      "label",
-      '[role="button"]',
-      "[tabindex]",
-      ".cursor-pointer",
-      ".clickable",
-    ]
-
-    return interactiveSelectors.some((selector) => {
-      try {
-        return element.matches(selector) || element.closest(selector)
-      } catch {
-        return false
-      }
-    })
-  }, [])
-
-  // Handle mouse enter/leave on interactive elements
-  const handleMouseOver = useCallback(
-    (e: MouseEvent) => {
-      const target = e.target as Element
-      if (target && isInteractiveElement(target)) {
-        setIsHovering(true)
-      } else {
-        setIsHovering(false)
-      }
-    },
-    [isInteractiveElement],
-  )
-
-  // Handle mouse down
-  const handleMouseDown = useCallback(() => {
-    setIsClicking(true)
-  }, [])
-
-  // Handle mouse up
-  const handleMouseUp = useCallback(() => {
-    setIsClicking(false)
-  }, [])
-
-  // Handle mouse enter viewport
-  const handleMouseEnter = useCallback(() => {
-    setIsVisible(true)
-  }, [])
-
-  // Handle mouse leave viewport
-  const handleMouseLeave = useCallback(() => {
-    setIsVisible(false)
-    setIsHovering(false)
-    setIsClicking(false)
-  }, [])
 
   useEffect(() => {
     setMounted(true)
 
-    // Don't show custom cursor if user prefers reduced motion
-    if (prefersReducedMotion()) {
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (prefersReducedMotion) {
       return
     }
 
-    // Add event listeners
-    const eventOptions = { passive: true }
+    // Check if device has a mouse (not touch-only)
+    const hasMouseSupport = window.matchMedia("(hover: hover) and (pointer: fine)").matches
+    if (!hasMouseSupport) {
+      return
+    }
 
-    document.addEventListener("mousemove", updateCursorPosition, eventOptions)
-    document.addEventListener("mouseover", handleMouseOver, eventOptions)
-    document.addEventListener("mousedown", handleMouseDown, eventOptions)
-    document.addEventListener("mouseup", handleMouseUp, eventOptions)
-    document.addEventListener("mouseenter", handleMouseEnter, eventOptions)
-    document.addEventListener("mouseleave", handleMouseLeave, eventOptions)
+    let animationFrameId: number
+
+    const updateCursorPosition = (e: MouseEvent) => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
+
+      animationFrameId = requestAnimationFrame(() => {
+        setPosition({ x: e.clientX, y: e.clientY })
+      })
+    }
+
+    const handleMouseEnter = () => setIsVisible(true)
+    const handleMouseLeave = () => setIsVisible(false)
+    const handleMouseDown = () => setIsClicking(true)
+    const handleMouseUp = () => setIsClicking(false)
+
+    const handleElementHover = (e: Event) => {
+      const target = e.target as HTMLElement
+      const isInteractive =
+        target.tagName === "BUTTON" ||
+        target.tagName === "A" ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.getAttribute("role") === "button" ||
+        target.classList.contains("cursor-pointer") ||
+        target.classList.contains("clickable") ||
+        window.getComputedStyle(target).cursor === "pointer"
+
+      setIsHovering(isInteractive)
+    }
+
+    // Add event listeners
+    document.addEventListener("mousemove", updateCursorPosition, { passive: true })
+    document.addEventListener("mouseenter", handleMouseEnter, { passive: true })
+    document.addEventListener("mouseleave", handleMouseLeave, { passive: true })
+    document.addEventListener("mousedown", handleMouseDown, { passive: true })
+    document.addEventListener("mouseup", handleMouseUp, { passive: true })
+    document.addEventListener("mouseover", handleElementHover, { passive: true })
 
     // Hide default cursor
     document.body.style.cursor = "none"
 
-    // Cleanup function
     return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
       document.removeEventListener("mousemove", updateCursorPosition)
-      document.removeEventListener("mouseover", handleMouseOver)
-      document.removeEventListener("mousedown", handleMouseDown)
-      document.removeEventListener("mouseup", handleMouseUp)
       document.removeEventListener("mouseenter", handleMouseEnter)
       document.removeEventListener("mouseleave", handleMouseLeave)
-
-      // Restore default cursor
+      document.removeEventListener("mousedown", handleMouseDown)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.removeEventListener("mouseover", handleElementHover)
       document.body.style.cursor = "auto"
-
-      // Cancel any pending animation frame
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
     }
-  }, [
-    updateCursorPosition,
-    handleMouseOver,
-    handleMouseDown,
-    handleMouseUp,
-    handleMouseEnter,
-    handleMouseLeave,
-    prefersReducedMotion,
-  ])
+  }, [])
 
-  // Don't render on server or if user prefers reduced motion
-  if (!mounted || prefersReducedMotion()) {
+  if (!mounted || !isVisible) {
     return null
   }
 
+  const scale = isClicking ? 0.8 : isHovering ? 1.5 : 1
+
   return (
     <div
-      ref={cursorRef}
-      className={`
-        fixed top-0 left-0 pointer-events-none z-[9999] 
-        transition-all duration-150 ease-out
-        ${isVisible ? "opacity-100" : "opacity-0"}
-        ${isHovering ? "scale-150" : "scale-100"}
-        ${isClicking ? "scale-75" : ""}
-      `}
+      className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference"
       style={{
-        transform: `translate3d(${position.x - 8}px, ${position.y - 8}px, 0)`,
+        transform: `translate3d(${position.x - 8}px, ${position.y - 8}px, 0) scale(${scale})`,
+        transition: "transform 0.15s ease-out",
         willChange: "transform",
-        mixBlendMode: "difference",
       }}
     >
       <div className="w-4 h-4 bg-white rounded-full border border-white/50 shadow-lg" />
