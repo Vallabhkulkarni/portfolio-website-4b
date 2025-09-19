@@ -4,148 +4,199 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Activity, Eye } from "lucide-react"
+import { Monitor, X, Activity, Clock, Zap, Eye } from "lucide-react"
 
 interface PerformanceMetrics {
-  fcp: number // First Contentful Paint
-  lcp: number // Largest Contentful Paint
-  fid: number // First Input Delay
-  cls: number // Cumulative Layout Shift
-  ttfb: number // Time to First Byte
+  fcp: number | null
+  lcp: number | null
+  fid: number | null
+  cls: number | null
+  ttfb: number | null
+  domContentLoaded: number | null
+  loadComplete: number | null
 }
 
 export default function PerformanceMonitor() {
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
   const [isVisible, setIsVisible] = useState(false)
+  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+    fcp: null,
+    lcp: null,
+    fid: null,
+    cls: null,
+    ttfb: null,
+    domContentLoaded: null,
+    loadComplete: null,
+  })
 
   useEffect(() => {
-    // Only show in development or when explicitly enabled
-    const showMonitor = process.env.NODE_ENV === "development" || localStorage.getItem("show-perf-monitor") === "true"
-    setIsVisible(showMonitor)
-
-    if (!showMonitor) return
+    // Only show in development
+    if (process.env.NODE_ENV !== "development") return
 
     const measurePerformance = () => {
-      try {
+      if ("performance" in window) {
         const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming
-        const paint = performance.getEntriesByType("paint")
 
-        const fcp = paint.find((entry) => entry.name === "first-contentful-paint")?.startTime || 0
-        const ttfb = navigation.responseStart - navigation.requestStart
+        setMetrics((prev) => ({
+          ...prev,
+          ttfb: navigation.responseStart - navigation.requestStart,
+          domContentLoaded: navigation.domContentLoadedEventEnd - navigation.navigationStart,
+          loadComplete: navigation.loadEventEnd - navigation.navigationStart,
+        }))
 
-        // Web Vitals observer
+        // Web Vitals
         if ("PerformanceObserver" in window) {
-          const observer = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-              if (entry.entryType === "largest-contentful-paint") {
-                setMetrics((prev) => ({ ...prev!, lcp: entry.startTime }))
-              }
-              if (entry.entryType === "first-input") {
-                setMetrics((prev) => ({ ...prev!, fid: (entry as any).processingStart - entry.startTime }))
-              }
-              if (entry.entryType === "layout-shift" && !(entry as any).hadRecentInput) {
-                setMetrics((prev) => ({ ...prev!, cls: prev!.cls + (entry as any).value }))
-              }
+          // First Contentful Paint
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries()
+            const fcpEntry = entries.find((entry) => entry.name === "first-contentful-paint")
+            if (fcpEntry) {
+              setMetrics((prev) => ({ ...prev, fcp: fcpEntry.startTime }))
             }
-          })
+          }).observe({ entryTypes: ["paint"] })
 
-          observer.observe({ entryTypes: ["largest-contentful-paint", "first-input", "layout-shift"] })
+          // Largest Contentful Paint
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries()
+            const lastEntry = entries[entries.length - 1]
+            if (lastEntry) {
+              setMetrics((prev) => ({ ...prev, lcp: lastEntry.startTime }))
+            }
+          }).observe({ entryTypes: ["largest-contentful-paint"] })
+
+          // First Input Delay
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries()
+            entries.forEach((entry: any) => {
+              if (entry.processingStart && entry.startTime) {
+                const fid = entry.processingStart - entry.startTime
+                setMetrics((prev) => ({ ...prev, fid }))
+              }
+            })
+          }).observe({ entryTypes: ["first-input"] })
+
+          // Cumulative Layout Shift
+          let clsValue = 0
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries()
+            entries.forEach((entry: any) => {
+              if (!entry.hadRecentInput) {
+                clsValue += entry.value
+                setMetrics((prev) => ({ ...prev, cls: clsValue }))
+              }
+            })
+          }).observe({ entryTypes: ["layout-shift"] })
         }
-
-        setMetrics({
-          fcp,
-          lcp: 0, // Will be updated by observer
-          fid: 0, // Will be updated by observer
-          cls: 0, // Will be updated by observer
-          ttfb,
-        })
-      } catch (error) {
-        console.warn("Performance monitoring error:", error)
       }
     }
 
-    // Measure after page load
-    if (document.readyState === "complete") {
-      measurePerformance()
-    } else {
-      window.addEventListener("load", measurePerformance)
+    measurePerformance()
+
+    // Keyboard shortcut to toggle (Ctrl+Shift+P)
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "P") {
+        e.preventDefault()
+        setIsVisible((prev) => !prev)
+      }
     }
 
-    return () => {
-      window.removeEventListener("load", measurePerformance)
-    }
+    document.addEventListener("keydown", handleKeyPress)
+    return () => document.removeEventListener("keydown", handleKeyPress)
   }, [])
 
-  const getScoreColor = (value: number, thresholds: [number, number]) => {
-    if (value <= thresholds[0]) return "text-green-600"
-    if (value <= thresholds[1]) return "text-yellow-600"
-    return "text-red-600"
+  const getScoreColor = (metric: string, value: number | null) => {
+    if (value === null) return "secondary"
+
+    switch (metric) {
+      case "fcp":
+        return value <= 1800 ? "default" : value <= 3000 ? "secondary" : "destructive"
+      case "lcp":
+        return value <= 2500 ? "default" : value <= 4000 ? "secondary" : "destructive"
+      case "fid":
+        return value <= 100 ? "default" : value <= 300 ? "secondary" : "destructive"
+      case "cls":
+        return value <= 0.1 ? "default" : value <= 0.25 ? "secondary" : "destructive"
+      case "ttfb":
+        return value <= 800 ? "default" : value <= 1800 ? "secondary" : "destructive"
+      default:
+        return "secondary"
+    }
   }
 
-  const getScoreLabel = (value: number, thresholds: [number, number]) => {
-    if (value <= thresholds[0]) return "Good"
-    if (value <= thresholds[1]) return "Needs Improvement"
-    return "Poor"
+  const formatValue = (value: number | null, unit = "ms") => {
+    if (value === null) return "Measuring..."
+    if (unit === "score") return value.toFixed(3)
+    return `${Math.round(value)}${unit}`
   }
 
-  if (!isVisible || !metrics) return null
+  if (process.env.NODE_ENV !== "development" || !isVisible) {
+    return null
+  }
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm">
-      <Card className="bg-background/95 backdrop-blur-sm border shadow-lg">
+      <Card className="shadow-lg border-2">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Performance Monitor
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Monitor className="h-4 w-4" />
+              <CardTitle className="text-sm">Performance Monitor</CardTitle>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)} className="h-6 w-6 p-0">
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <div className="flex items-center justify-between">
-                <span>FCP</span>
-                <Badge variant="outline" className={getScoreColor(metrics.fcp, [1800, 3000])}>
-                  {Math.round(metrics.fcp)}ms
-                </Badge>
-              </div>
-              <div className="text-muted-foreground text-xs">{getScoreLabel(metrics.fcp, [1800, 3000])}</div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                FCP
+              </span>
+              <Badge variant={getScoreColor("fcp", metrics.fcp)} className="text-xs">
+                {formatValue(metrics.fcp)}
+              </Badge>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between">
-                <span>LCP</span>
-                <Badge variant="outline" className={getScoreColor(metrics.lcp, [2500, 4000])}>
-                  {Math.round(metrics.lcp)}ms
-                </Badge>
-              </div>
-              <div className="text-muted-foreground text-xs">{getScoreLabel(metrics.lcp, [2500, 4000])}</div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Activity className="h-3 w-3" />
+                LCP
+              </span>
+              <Badge variant={getScoreColor("lcp", metrics.lcp)} className="text-xs">
+                {formatValue(metrics.lcp)}
+              </Badge>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between">
-                <span>FID</span>
-                <Badge variant="outline" className={getScoreColor(metrics.fid, [100, 300])}>
-                  {Math.round(metrics.fid)}ms
-                </Badge>
-              </div>
-              <div className="text-muted-foreground text-xs">{getScoreLabel(metrics.fid, [100, 300])}</div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                FID
+              </span>
+              <Badge variant={getScoreColor("fid", metrics.fid)} className="text-xs">
+                {formatValue(metrics.fid)}
+              </Badge>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between">
-                <span>CLS</span>
-                <Badge variant="outline" className={getScoreColor(metrics.cls, [0.1, 0.25])}>
-                  {metrics.cls.toFixed(3)}
-                </Badge>
-              </div>
-              <div className="text-muted-foreground text-xs">{getScoreLabel(metrics.cls, [0.1, 0.25])}</div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                CLS
+              </span>
+              <Badge variant={getScoreColor("cls", metrics.cls)} className="text-xs">
+                {formatValue(metrics.cls, "score")}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between col-span-2">
+              <span className="text-xs text-muted-foreground">TTFB</span>
+              <Badge variant={getScoreColor("ttfb", metrics.ttfb)} className="text-xs">
+                {formatValue(metrics.ttfb)}
+              </Badge>
             </div>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)} className="w-full text-xs">
-            <Eye className="h-3 w-3 mr-1" />
-            Hide Monitor
-          </Button>
+          <div className="text-xs text-muted-foreground text-center pt-2 border-t">Press Ctrl+Shift+P to toggle</div>
         </CardContent>
       </Card>
     </div>

@@ -1,156 +1,161 @@
 "use client"
 
-import type React from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Code, Database, Globe, Wrench, Lightbulb, Users } from "lucide-react"
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
-import { Code, Database, Server, GitBranch, BrainCircuit, Users } from "lucide-react"
-
-interface Skill {
-  icon: React.ReactNode
-  name: string
-  description: string
-  items: string[]
-}
+const skillCategories = [
+  {
+    title: "Programming Languages",
+    icon: Code,
+    description: "Core programming languages and frameworks",
+    skills: [
+      "Java",
+      "JavaScript",
+      "TypeScript",
+      "PL/SQL",
+      "HTML5",
+      "CSS3",
+      "Python",
+      "C++",
+      "React",
+      "Next.js",
+      "Node.js",
+    ],
+  },
+  {
+    title: "Oracle Technologies",
+    icon: Database,
+    description: "Enterprise Oracle development stack",
+    skills: [
+      "Oracle VBCS",
+      "Oracle ADF",
+      "Oracle SQL",
+      "Oracle HCM",
+      "HDL (HCM Data Loader)",
+      "Oracle Database",
+      "Oracle Forms",
+      "Oracle Reports",
+      "Oracle APEX",
+    ],
+  },
+  {
+    title: "Web Technologies",
+    icon: Globe,
+    description: "Modern web development technologies",
+    skills: [
+      "REST APIs",
+      "Web Services",
+      "JSON",
+      "XML",
+      "SOAP",
+      "GraphQL",
+      "Microservices",
+      "Progressive Web Apps",
+      "Responsive Design",
+    ],
+  },
+  {
+    title: "Tools & Platforms",
+    icon: Wrench,
+    description: "Development tools and platforms",
+    skills: [
+      "Git",
+      "GitHub",
+      "VS Code",
+      "IntelliJ IDEA",
+      "Oracle JDeveloper",
+      "Postman",
+      "Docker",
+      "Jenkins",
+      "Maven",
+      "npm/yarn",
+    ],
+  },
+  {
+    title: "Problem Solving",
+    icon: Lightbulb,
+    description: "Analytical and problem-solving capabilities",
+    skills: [
+      "Algorithm Design",
+      "System Design",
+      "Data Structures",
+      "Debugging",
+      "Performance Optimization",
+      "Code Review",
+      "Technical Documentation",
+      "Requirements Analysis",
+    ],
+  },
+  {
+    title: "Soft Skills",
+    icon: Users,
+    description: "Communication and collaboration skills",
+    skills: [
+      "Team Collaboration",
+      "Project Management",
+      "Client Communication",
+      "Mentoring",
+      "Agile Methodology",
+      "Scrum",
+      "Leadership",
+      "Presentation Skills",
+    ],
+  },
+]
 
 export default function Skills() {
-  const [activeSkill, setActiveSkill] = useState<string | null>(null)
-
-  const skills: Skill[] = [
-    {
-      icon: <Code className="h-6 w-6" />,
-      name: "Programming",
-      description: "Languages and frameworks I work with",
-      items: ["Java", "SQL", "PL/SQL", "JavaScript"],
-    },
-    {
-      icon: <Database className="h-6 w-6" />,
-      name: "Oracle HCM",
-      description: "Oracle technologies I specialize in",
-      items: ["VBCS", "ADF", "HDL", "Oracle SQL", "Oracle Fusion HCM"],
-    },
-    {
-      icon: <Server className="h-6 w-6" />,
-      name: "Integration & Middleware",
-      description: "Technologies for connecting systems",
-      items: ["REST APIs", "SOAP APIs", "Web Services"],
-    },
-    {
-      icon: <GitBranch className="h-6 w-6" />,
-      name: "Development Tools",
-      description: "Tools I use for development",
-      items: ["Oracle JDeveloper", "Visual Studio Code", "Git", "GitHub"],
-    },
-    {
-      icon: <BrainCircuit className="h-6 w-6" />,
-      name: "Problem Solving",
-      description: "Analytical approach to challenges",
-      items: ["Algorithm Design", "Debugging", "Performance Optimization"],
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      name: "Collaboration",
-      description: "Working effectively with teams",
-      items: ["Agile Methodology", "Code Reviews", "Client Communication"],
-    },
-  ]
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  }
-
   return (
-    <section id="skills" className="py-20 md:py-32">
+    <section id="skills" className="py-20 bg-muted/50">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Skills</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            My technical expertise and professional capabilities.
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Technical Skills & Expertise</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            A comprehensive overview of my technical skills, tools, and technologies I work with to deliver high-quality
+            software solutions.
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-        >
-          {skills.map((skill, index) => (
-            <motion.div key={index} variants={item}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {skillCategories.map((category, index) => {
+            const IconComponent = category.icon
+            return (
               <Card
-                className="h-full transition-all duration-300 hover:shadow-lg border-2 hover:border-primary/50"
-                onMouseEnter={() => {
-                  setActiveSkill(skill.name)
-                }}
-                onMouseLeave={() => setActiveSkill(null)}
+                key={category.title}
+                className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer group"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-primary/10 p-3 rounded-full mr-4 text-primary">{skill.icon}</div>
-                    <div>
-                      <h3 className="font-bold text-lg">{skill.name}</h3>
-                      <p className="text-sm text-muted-foreground">{skill.description}</p>
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <IconComponent className="h-5 w-5 text-primary" />
                     </div>
+                    <CardTitle className="text-xl">{category.title}</CardTitle>
                   </div>
-
-                  <ul className="space-y-2">
-                    {skill.items.map((item, itemIndex) => (
-                      <li
-                        key={itemIndex}
-                        className={`flex items-center text-sm transition-all duration-300 ${
-                          activeSkill === skill.name ? "text-primary font-medium" : ""
-                        }`}
+                  <CardDescription className="text-sm">{category.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {category.skills.map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant="secondary"
+                        className="text-xs hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                       >
-                        <span className="mr-2">•</span>
-                        {item}
-                      </li>
+                        {skill}
+                      </Badge>
                     ))}
-                  </ul>
+                  </div>
                 </CardContent>
               </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+            )
+          })}
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="text-center mt-16"
-        >
-          <p className="text-lg max-w-3xl mx-auto">
-            I'm constantly learning and expanding my skill set to stay current with industry trends and technologies.
+        <div className="mt-16 text-center">
+          <p className="text-muted-foreground">
+            Always learning and exploring new technologies to stay current with industry trends.
           </p>
-          <div
-            className="mt-4 text-primary font-medium cursor-help easter-egg"
-            onMouseEnter={() => {}}
-            onClick={() => {
-              alert("Why do Java developers wear glasses? Because they don't C#!")
-            }}
-          >
-            Click for a developer joke
-          </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )
