@@ -1,50 +1,85 @@
 import { Suspense } from "react"
+import dynamic from "next/dynamic"
 import Navbar from "@/components/navbar"
-import Hero from "@/components/hero"
-import About from "@/components/about"
-import Skills from "@/components/skills"
-import Projects from "@/components/projects"
-import Footer from "@/components/footer"
-import CustomCursor from "@/components/custom-cursor"
-import EasterEgg from "@/components/easter-egg"
 import StructuredData from "@/components/structured-data"
+
+// Dynamic imports for better performance
+const OptimizedHero = dynamic(() => import("@/components/optimized-hero"), {
+  ssr: true,
+  loading: () => (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    </div>
+  ),
+})
+
+const About = dynamic(() => import("@/components/about"), {
+  ssr: false,
+  loading: () => (
+    <div className="container mx-auto px-4 py-20 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+    </div>
+  ),
+})
+
+const Skills = dynamic(() => import("@/components/skills"), {
+  ssr: false,
+  loading: () => (
+    <div className="container mx-auto px-4 py-20 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+    </div>
+  ),
+})
+
+const OptimizedProjects = dynamic(() => import("@/components/optimized-projects"), {
+  ssr: false,
+  loading: () => (
+    <div className="container mx-auto px-4 py-20 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+    </div>
+  ),
+})
+
+const Footer = dynamic(() => import("@/components/footer"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-background border-t border-border py-12">
+      <div className="container mx-auto px-4 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+      </div>
+    </div>
+  ),
+})
+
+// Lazy load non-critical components
+const CustomCursor = dynamic(() => import("@/components/custom-cursor"), {
+  ssr: false,
+})
+
+const EasterEgg = dynamic(() => import("@/components/easter-egg"), {
+  ssr: false,
+})
 
 export default function Home() {
   return (
     <>
-      {/* Structured Data for SEO */}
+      {/* Critical above-the-fold content */}
       <StructuredData />
-
-      {/* Custom Cursor Effect */}
-      <CustomCursor />
-
-      {/* Easter Egg Component */}
-      <EasterEgg />
-
-      {/* Main Navigation */}
       <Navbar />
 
       {/* Main Content */}
       <main id="main-content" className="relative">
-        {/* Hero Section */}
+        {/* Hero Section - Critical, load immediately */}
         <section id="home" className="hero-section">
-          <Suspense
-            fallback={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            }
-          >
-            <Hero />
-          </Suspense>
+          <OptimizedHero />
         </section>
 
-        {/* About Section */}
+        {/* Below-the-fold content - Lazy loaded */}
         <section id="about" className="py-20 bg-muted/50">
           <Suspense
             fallback={
               <div className="container mx-auto px-4 py-20 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
               </div>
             }
           >
@@ -52,12 +87,11 @@ export default function Home() {
           </Suspense>
         </section>
 
-        {/* Skills Section */}
         <section id="skills" className="py-20">
           <Suspense
             fallback={
               <div className="container mx-auto px-4 py-20 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
               </div>
             }
           >
@@ -65,22 +99,35 @@ export default function Home() {
           </Suspense>
         </section>
 
-        {/* Projects Section */}
         <section id="projects" className="py-20 bg-muted/50">
           <Suspense
             fallback={
               <div className="container mx-auto px-4 py-20 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
               </div>
             }
           >
-            <Projects />
+            <OptimizedProjects />
           </Suspense>
         </section>
       </main>
 
       {/* Footer */}
-      <Footer />
+      <Suspense
+        fallback={
+          <div className="bg-background border-t border-border py-12">
+            <div className="container mx-auto px-4 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+            </div>
+          </div>
+        }
+      >
+        <Footer />
+      </Suspense>
+
+      {/* Non-critical components */}
+      <CustomCursor />
+      <EasterEgg />
     </>
   )
 }
