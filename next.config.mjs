@@ -1,18 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 31536000,
+    minimumCacheTTL: 60,
     unoptimized: true,
   },
 
-  // Compression
-  compress: true,
-
-  // Security and performance headers
+  // Headers for security and performance
   async headers() {
     return [
       {
@@ -28,11 +35,11 @@ const nextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            value: 'origin-when-cross-origin',
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },
@@ -65,26 +72,23 @@ const nextConfig = {
     ]
   },
 
-  // Disable x-powered-by header
-  poweredByHeader: false,
+  // Webpack configuration for bundle optimization
+  webpack: (config, { dev, isServer }) => {
+    // Optimize bundle size in production
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      }
+    }
 
-  // Enable React strict mode
-  reactStrictMode: true,
-
-  // Trailing slash configuration
-  trailingSlash: false,
-
-  // Generate ETags for better caching
-  generateEtags: true,
-
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // TypeScript configuration
-  typescript: {
-    ignoreBuildErrors: true,
+    return config
   },
 }
 

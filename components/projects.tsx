@@ -5,7 +5,8 @@ import { motion, useInView } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, Github, Code2, Cpu, Network } from "lucide-react"
+import { ExternalLink, Github, Code2, Cpu, Network, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 // Project data with enhanced metadata
 const projects = [
@@ -156,6 +157,13 @@ function ProjectCard({ project, index }: { project: (typeof projects)[0]; index:
 
           {/* Action Buttons */}
           <div className="flex gap-3">
+            <Button asChild size="sm" variant="outline" className="flex-1 bg-transparent">
+              <Link href={`/projects/${project.id}`} aria-label={`View detailed information about ${project.title}`}>
+                <ArrowRight className="h-4 w-4 mr-2" aria-hidden="true" />
+                View Details
+              </Link>
+            </Button>
+
             {project.githubUrl && (
               <Button asChild size="sm" className="flex-1 bg-primary hover:bg-primary/90 transition-all duration-200">
                 <a
@@ -165,7 +173,7 @@ function ProjectCard({ project, index }: { project: (typeof projects)[0]; index:
                   aria-label={`View ${project.title} source code on GitHub`}
                 >
                   <Github className="h-4 w-4 mr-2" aria-hidden="true" />
-                  View Code
+                  Code
                   <ExternalLink className="h-3 w-3 ml-2" aria-hidden="true" />
                 </a>
               </Button>
@@ -173,7 +181,7 @@ function ProjectCard({ project, index }: { project: (typeof projects)[0]; index:
 
             {!project.githubUrl && (
               <div className="flex-1 text-center">
-                <p className="text-sm text-muted-foreground italic py-2">Project details available upon request</p>
+                <p className="text-sm text-muted-foreground italic py-2">Available upon request</p>
               </div>
             )}
           </div>
@@ -183,7 +191,7 @@ function ProjectCard({ project, index }: { project: (typeof projects)[0]; index:
   )
 }
 
-// Main projects component - removed any scroll-down functionality
+// Main projects component
 export default function Projects() {
   const sectionRef = useRef<HTMLElement>(null)
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
@@ -191,7 +199,7 @@ export default function Projects() {
   return (
     <section ref={sectionRef} id="projects" className="py-20 px-4 bg-muted/30" aria-labelledby="projects-heading">
       <div className="max-w-6xl mx-auto">
-        {/* Section Header - Clean without any scroll functionality */}
+        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}

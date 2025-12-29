@@ -23,12 +23,12 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
   }
 
   .dark {
@@ -63,102 +63,343 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Smooth scrolling with offset for fixed navbar */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  /* Ensure sections have proper scroll margin */
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Accessibility improvements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .sr-only:focus,
+  .focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :root {
+      --primary: 0 0% 0%;
+      --background: 0 0% 100%;
+      --foreground: 0 0% 0%;
+    }
+
+    .dark {
+      --primary: 0 0% 100%;
+      --background: 0 0% 0%;
+      --foreground: 0 0% 100%;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* Focus indicators */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Ensure minimum touch target size */
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  a {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
-/* Custom cursor styles */
-@media (hover: hover) and (pointer: fine) {
-  .cursor-none {
-    cursor: none !important;
+@layer utilities {
+  /* Performance optimizations */
+  .will-change-transform {
+    will-change: transform;
   }
 
-  .cursor-none * {
-    cursor: none !important;
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Grid pattern background */
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .dark .bg-grid-pattern {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus styles for accessibility */
+  .focus-visible:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+
+  /* Loading animations */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(-25%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+      transform: none;
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  /* Optimized animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Print styles */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    body {
+      background: white !important;
+      color: black !important;
+    }
   }
 }
 
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/* Component-specific optimizations */
+.hero-section {
+  contain: layout style paint;
 }
 
-/* Performance optimizations */
-.will-change-transform {
-  will-change: transform;
+.project-card {
+  contain: layout style;
 }
 
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
+/* Intersection observer optimization */
+.lazy-load {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+.lazy-load.loaded {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Focus styles for accessibility */
-.focus-visible:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
+/* Typing effect styles */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: currentColor;
+  animation: blink 1s infinite;
 }
 
-/* Loading animations */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes bounce {
+@keyframes blink {
   0%,
-  100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
   50% {
-    transform: none;
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+/* Interactive element styles */
+.tech-icon {
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+.tech-icon:hover {
+  transform: translateY(-5px);
+  filter: drop-shadow(0 0 8px hsla(var(--primary), 0.5));
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
-  border-radius: 4px;
+/* Enhanced project card styles */
+.project-card {
+  perspective: 1000px;
+  transition: transform 0.5s;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
+.project-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
 }
 
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
+.project-card:hover .project-card-inner {
+  transform: rotateY(10deg) rotateX(5deg);
+}
+
+/* Project icon specific styles */
+.project-card:hover .project-icon {
+  transform: scale(1.05);
+}
+
+.project-icon {
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+}
+
+/* Selection styles */
+::selection {
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  button,
+  [role="button"],
+  a {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  .project-card .project-icon {
+    min-height: 180px;
+  }
+
+  /* Adjust scroll padding for mobile */
+  html {
+    scroll-padding-top: 4rem;
+  }
+
+  section[id] {
+    scroll-margin-top: 4rem;
+  }
+}
+
+/* Tablet specific adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .project-card .project-icon {
+    min-height: 190px;
   }
 }

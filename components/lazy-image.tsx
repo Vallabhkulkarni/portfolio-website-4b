@@ -11,6 +11,7 @@ interface LazyImageProps {
   className?: string
   priority?: boolean
   placeholder?: string
+  quality?: number
 }
 
 export default function LazyImage({
@@ -21,6 +22,7 @@ export default function LazyImage({
   className = "",
   priority = false,
   placeholder = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PC9zdmc+",
+  quality = 75,
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isInView, setIsInView] = useState(false)
@@ -41,8 +43,8 @@ export default function LazyImage({
         }
       },
       {
-        rootMargin: "50px",
         threshold: 0.1,
+        rootMargin: "50px",
       },
     )
 
@@ -59,50 +61,57 @@ export default function LazyImage({
 
   const handleError = () => {
     setError(true)
-    setIsLoaded(true)
   }
 
   return (
     <div ref={imgRef} className={`relative overflow-hidden ${className}`} style={{ width, height }}>
-      {!isInView && !priority ? (
+      {/* Placeholder */}
+      {!isLoaded && !error && (
         <div
-          className="w-full h-full bg-muted animate-pulse flex items-center justify-center"
-          style={{ width, height }}
+          className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center"
+          style={{
+            backgroundImage: `url(${placeholder})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
         >
-          <div className="text-muted-foreground text-sm">Loading...</div>
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : (
-        <>
-          {!isLoaded && (
-            <div
-              className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center"
-              style={{ width, height }}
-            >
-              <div className="text-muted-foreground text-sm">Loading...</div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div className="absolute inset-0 bg-muted flex items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            <div className="w-12 h-12 mx-auto mb-2 opacity-50">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
             </div>
-          )}
-          {error ? (
-            <div
-              className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground"
-              style={{ width, height }}
-            >
-              Failed to load image
-            </div>
-          ) : (
-            <Image
-              src={src || "/placeholder.svg"}
-              alt={alt}
-              width={width}
-              height={height}
-              className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"} ${className}`}
-              onLoad={handleLoad}
-              onError={handleError}
-              priority={priority}
-              placeholder="blur"
-              blurDataURL={placeholder}
-            />
-          )}
-        </>
+            <p className="text-sm">Failed to load image</p>
+          </div>
+        </div>
+      )}
+
+      {/* Actual image */}
+      {isInView && !error && (
+        <Image
+          src={src || "/placeholder.svg"}
+          alt={alt}
+          width={width}
+          height={height}
+          quality={quality}
+          priority={priority}
+          className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+          onLoad={handleLoad}
+          onError={handleError}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
       )}
     </div>
   )

@@ -16,11 +16,30 @@ export default function About() {
 
   const experiences = [
     {
+      id: "oracle-senior",
+      title: "Senior Applications Developer",
+      company: "Oracle",
+      location: "India",
+      period: "September 1, 2025 - Present",
+      type: "Full-time",
+      description:
+        "Leading enterprise application development initiatives using advanced Oracle technologies with focus on architecture, performance optimization, and team mentorship.",
+      responsibilities: [
+        "Architecting and developing enterprise applications using VBCS and ADF",
+        "Mentoring junior developers on best practices in Oracle development",
+        "Optimizing complex SQL queries and database performance at scale",
+        "Leading integration efforts with REST APIs and external systems",
+        "Designing user-centric solutions for Oracle HCM applications",
+      ],
+      technologies: ["Oracle VBCS", "Oracle ADF", "Oracle SQL", "PL/SQL", "HDL", "REST APIs", "Oracle HCM"],
+      current: true,
+    },
+    {
       id: "oracle-current",
       title: "Application Developer 2",
       company: "Oracle",
       location: "India",
-      period: "July 2023 - Present",
+      period: "July 2023 - August 2025",
       type: "Full-time",
       description:
         "Currently developing enterprise applications using Oracle technologies with focus on user experience and performance optimization.",
@@ -32,7 +51,7 @@ export default function About() {
         "Implemented user-friendly interfaces for Oracle HCM applications",
       ],
       technologies: ["Oracle VBCS", "Oracle ADF", "Oracle SQL", "PL/SQL", "HDL", "REST APIs", "Oracle HCM"],
-      current: true,
+      current: false,
     },
     {
       id: "rhythmflows-intern",
